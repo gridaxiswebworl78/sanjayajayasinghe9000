@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Glamour Studio — Book Your Appointment</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { gold: '#d4af37', lounge: '#0f0a0a' },
+        fontFamily: {
+          serif: ['"Playfair Display"', 'serif'],
+          sans: ['Inter', 'sans-serif'],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  body { background-color: #0f0a0a; }
+  .glass {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+  }
+  .slot-btn { transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease; }
+  .slot-free:hover { border-color: #d4af37; background: rgba(212, 175, 55, 0.08); }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 3px; }
+  input:focus, select:focus { outline: none; }
+</style>
+</head>
+<body class="text-white font-sans min-h-screen pb-16">
+
+  <header class="glass sticky top-0 z-30 px-5 py-4 flex items-center justify-between">
+    <h1 class="font-serif text-xl text-gold">Glamour Studio</h1>
+    <button id="staffToggle" class="text-xs text-white/40 hover:text-gold">Staff</button>
+  </header>
+
+  <!-- Booking view -->
+  <main id="bookingView" class="max-w-md mx-auto px-4 py-6 space-y-5">
+
+    <section class="glass rounded-2xl p-5">
+      <h2 class="font-serif text-lg mb-1">Book your appointment</h2>
+      <p class="text-white/50 text-sm mb-4">Luxury grooming, on your schedule.</p>
+
+      <label class="block text-xs text-white/40 mb-1" for="custName">Name</label>
+      <input id="custName" type="text" placeholder="Your full name"
+        class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 mb-3 focus:border-gold" />
+
+      <label class="block text-xs text-white/40 mb-1" for="custPhone">Phone</label>
+      <input id="custPhone" type="tel" placeholder="07X XXX XXXX"
+        class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 mb-3 focus:border-gold" />
+
+      <label class="block text-xs text-white/40 mb-1" for="serviceSelect">Service</label>
+      <select id="serviceSelect"
+        class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 mb-3 focus:border-gold">
+        <option value="">Loading services…</option>
+      </select>
+
+      <label class="block text-xs text-white/40 mb-1" for="dateInput">Date</label>
+      <input id="dateInput" type="date"
+        class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 focus:border-gold" />
+    </section>
+
+    <section class="glass rounded-2xl p-5">
+      <h3 class="font-serif text-base mb-3">Available times</h3>
+      <div id="slotGrid" class="grid grid-cols-3 gap-2 text-sm">
+        <p class="col-span-3 text-white/40 text-center py-4">Pick a date and service to see open times.</p>
+      </div>
+    </section>
+
+    <section id="paymentSection" class="glass rounded-2xl p-5 hidden">
+      <h3 class="font-serif text-base mb-3">Secure your slot</h3>
+
+      <div class="flex gap-2 mb-4">
+        <button id="tabCard" type="button" class="flex-1 py-2 rounded-lg border border-gold text-gold text-sm font-medium">Card (Demo)</button>
+        <button id="tabBank" type="button" class="flex-1 py-2 rounded-lg border border-white/20 text-white/60 text-sm font-medium">Bank transfer</button>
+      </div>
+
+      <div id="cardPane" class="space-y-3">
+        <input id="cardNumber" type="text" inputmode="numeric" placeholder="Card number — demo only, end in 0002 to test a decline"
+          class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 focus:border-gold" />
+        <div class="grid grid-cols-2 gap-3">
+          <input id="cardExpiry" type="text" placeholder="MM/YY"
+            class="bg-black/30 border border-white/10 rounded-lg px-3 py-2 focus:border-gold" />
+          <input id="cardCvv" type="text" inputmode="numeric" placeholder="CVV"
+            class="bg-black/30 border border-white/10 rounded-lg px-3 py-2 focus:border-gold" />
+        </div>
+        <button id="payCardBtn" type="button" class="w-full py-3 rounded-lg bg-gold text-black font-semibold hover:brightness-110">
+          Pay now (demo)
+        </button>
+      </div>
+
+      <div id="bankPane" class="hidden space-y-3">
+        <p class="text-white/50 text-sm">Send your bank transfer receipt on WhatsApp and we'll hold this slot for 10 minutes while we verify it.</p>
+        <button id="payBankBtn" type="button" class="w-full py-3 rounded-lg bg-gold text-black font-semibold hover:brightness-110">
+          Send Receipt via WhatsApp to Lock Slot
+        </button>
+      </div>
+    </section>
+
+    <div id="statusMsg" class="text-sm text-center min-h-[1.25rem]"></div>
+  </main>
+
+  <!-- Admin view -->
+  <main id="adminView" class="hidden max-w-md mx-auto px-4 py-6 space-y-5">
+
+    <div id="adminLoginPane" class="glass rounded-2xl p-5">
+      <h2 class="font-serif text-lg mb-3">Staff login</h2>
+      <label class="block text-xs text-white/40 mb-1" for="adminPassword">Password</label>
+      <input id="adminPassword" type="password" placeholder="Enter password"
+        class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 mb-3 focus:border-gold" />
+      <button id="adminLoginBtn" type="button" class="w-full py-3 rounded-lg bg-gold text-black font-semibold hover:brightness-110">Log in</button>
+      <p id="adminLoginError" class="text-red-400 text-xs mt-2"></p>
+    </div>
+
+    <div id="adminPanel" class="hidden space-y-5">
+      <section class="glass rounded-2xl p-5">
+        <h2 class="font-serif text-lg mb-3">Pending review</h2>
+        <div id="pendingList" class="space-y-3">
+          <p class="text-white/40 text-sm">Nothing waiting on approval right now.</p>
+        </div>
+      </section>
+
+      <section class="glass rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-serif text-lg">Day's schedule</h2>
+          <input id="scheduleDate" type="date" class="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-xs" />
+        </div>
+        <div id="scheduleList" class="space-y-2 text-sm">
+          <p class="text-white/40">No approved bookings yet.</p>
+        </div>
+      </section>
+
+      <button id="adminLogoutBtn" type="button" class="text-xs text-white/40 hover:text-gold">Log out</button>
+    </div>
+  </main>
+
+  <script>
+    // -------------------- Config --------------------
+    const API_BASE = 'https://YOUR-WORKER-SUBDOMAIN.workers.dev'; // TODO: your deployed Worker URL
+    const WHATSAPP_NUMBER = '94XXXXXXXXX'; // TODO: salon's WhatsApp Business number — country code + number, no + or leading 0
+    const POLL_INTERVAL_MS = 15000;
+
+    let services = {};
+    let currentSlots = [];
+    let selectedTime = null;
+    let countdownTimers = {};
+    let adminToken = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function formatTime12h(hhmm) {
+      const [h, m] = hhmm.split(':').map(Number);
+      const period = h >= 12 ? 'PM' : 'AM';
+      const h12 = h % 12 === 0 ? 12 : h % 12;
+      return `${h12}:${m.toString().padStart(2, '0')} ${period}`;
+    }
+
+    function addMinutes(hhmm, mins) {
+      const [h, m] = hhmm.split(':').map(Number);
+      const total = h * 60 + m + mins;
+      const hh = Math.floor(total / 60).toString().padStart(2, '0');
+      const mm = (total % 60).toString().padStart(2, '0');
+      return `${hh}:${mm}`;
+    }
+
+    function todayISO() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function showStatus(message, isError = false) {
+      const el = $('statusMsg');
+      el.textContent = message;
+      el.className = `text-sm text-center min-h-[1.25rem] ${isError ? 'text-red-400' : 'text-gold'}`;
+    }
+
+    // -------------------- Init --------------------
+
+    async function loadServices() {
+      try {
+        const res = await fetch(`${API_BASE}/api/services`);
+        const data = await res.json();
+        services = data.services || {};
+        $('serviceSelect').innerHTML = Object.keys(services)
+          .map((name) => `<option value="${name}">${name} (${services[name]} min)</option>`)
+          .join('');
+      } catch (err) {
+        showStatus('Could not load services — check your connection.', true);
+      }
+    }
+
+    // -------------------- Slots --------------------
+
+    async function fetchSlots() {
+      const date = $('dateInput').value;
+      const service = $('serviceSelect').value;
+      if (!date || !service) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/slots?date=${date}&service=${encodeURIComponent(service)}`);
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Failed to load slots');
+        currentSlots = data.slots;
+        renderSlots(data.duration_minutes);
+      } catch (err) {
+        $('slotGrid').innerHTML = `<p class="col-span-3 text-red-400 text-center py-4 text-xs">${err.message}</p>`;
+      }
+    }
+
+    function renderSlots(durationMinutes) {
+      const grid = $('slotGrid');
+      clearCountdowns();
+
+      if (!currentSlots.length) {
+        grid.innerHTML = '<p class="col-span-3 text-white/40 text-center py-4">No slots available for this day.</p>';
+        return;
+      }
+
+      grid.innerHTML = currentSlots.map((slot) => {
+        const label12 = formatTime12h(slot.time);
+        if (slot.status === 'free') {
+          return `<button data-time="${slot.time}" class="slot-btn slot-free border border-white/15 rounded-lg py-2 text-white/90">${label12}</button>`;
+        }
+        if (slot.status === 'pending_verification') {
+          return `<button disabled data-expires="${slot.expires_at}" id="pending-${slot.time}"
+            class="slot-btn border border-amber-400/40 bg-amber-400/10 rounded-lg py-2 text-amber-300 text-xs">Processing…</button>`;
+        }
+        const endLabel = formatTime12h(addMinutes(slot.time, durationMinutes));
+        return `<button disabled title="${slot.masked} Booked ${label12} to ${endLabel}"
+          class="slot-btn border border-white/10 bg-white/5 rounded-lg py-2 text-white/30 text-[11px] px-1 leading-tight">${slot.masked}<br>Booked</button>`;
+      }).join('');
+
+      grid.querySelectorAll('.slot-free').forEach((btn) => {
+        btn.addEventListener('click', () => selectSlot(btn.dataset.time));
+      });
+
+      startCountdowns();
+    }
+
+    function startCountdowns() {
+      document.querySelectorAll('[data-expires]').forEach((el) => {
+        const expiresAt = new Date(el.dataset.expires).getTime();
+        const tick = () => {
+          const remaining = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+          if (remaining <= 0) {
+            el.textContent = 'Expiring…';
+            fetchSlots(); // the KV soft lock should be gone server-side by now
+            return;
+          }
+          const mm = Math.floor(remaining / 60);
+          const ss = (remaining % 60).toString().padStart(2, '0');
+          el.textContent = `Processing… ${mm}:${ss}`;
+        };
+        tick();
+        countdownTimers[el.id] = setInterval(tick, 1000);
+      });
+    }
+
+    function clearCountdowns() {
+      Object.values(countdownTimers).forEach(clearInterval);
+      countdownTimers = {};
+    }
+
+    function selectSlot(time) {
+      selectedTime = time;
+      document.querySelectorAll('.slot-free').forEach((b) => b.classList.remove('bg-gold', 'text-black', 'border-gold'));
+      const btn = [...document.querySelectorAll('.slot-free')].find((b) => b.dataset.time === time);
+      if (btn) btn.classList.add('bg-gold', 'text-black', 'border-gold');
+      $('paymentSection').classList.remove('hidden');
+    }
+
+    // -------------------- Payment tabs --------------------
+
+    function switchPaymentTab(tab) {
+      const isCard = tab === 'card';
+      $('cardPane').classList.toggle('hidden', !isCard);
+      $('bankPane').classList.toggle('hidden', isCard);
+      $('tabCard').classList.toggle('border-gold', isCard);
+      $('tabCard').classList.toggle('text-gold', isCard);
+      $('tabCard').classList.toggle('border-white/20', !isCard);
+      $('tabCard').classList.toggle('text-white/60', !isCard);
+      $('tabBank').classList.toggle('border-gold', !isCard);
+      $('tabBank').classList.toggle('text-gold', !isCard);
+      $('tabBank').classList.toggle('border-white/20', isCard);
+      $('tabBank').classList.toggle('text-white/60', isCard);
+    }
+
+    function getBookingPayload() {
+      return {
+        name: $('custName').value.trim(),
+        phone: $('custPhone').value.trim(),
+        service: $('serviceSelect').value,
+        date: $('dateInput').value,
+        time: selectedTime,
+      };
+    }
+
+    function validateBookingForm() {
+      const p = getBookingPayload();
+      if (!p.name || !p.phone) { showStatus('Please enter your name and phone number.', true); return null; }
+      if (!p.time) { showStatus('Please choose an available time slot.', true); return null; }
+      return p;
+    }
+
+    // -------------------- Card (demo) payment --------------------
+
+    async function payWithCard() {
+      const payload = validateBookingForm();
+      if (!payload) return;
+
+      showStatus('Processing payment…');
+      try {
+        const res = await fetch(`${API_BASE}/api/payments/webhook`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...payload, card_number: $('cardNumber').value }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          showStatus(data.message || data.error || 'Payment failed.', true);
+          return;
+        }
+        showStatus(`Booked! Confirmation ref ${data.payment_ref}.`);
+        resetAfterBooking(true);
+      } catch (err) {
+        showStatus('Network error — please try again.', true);
+      }
+    }
+
+    // -------------------- Bank transfer (WhatsApp soft lock) --------------------
+
+    function buildWhatsAppLink(payload) {
+      const message =
+        `Booking request:\n` +
+        `Name: ${payload.name}\n` +
+        `Phone: ${payload.phone}\n` +
+        `Service: ${payload.service}\n` +
+        `Date: ${payload.date}\n` +
+        `Time: ${formatTime12h(payload.time)}\n\n` +
+        `I've attached my bank transfer receipt for this slot.`;
+      return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    }
+
+    async function payWithBankTransfer() {
+      const payload = validateBookingForm();
+      if (!payload) return;
+
+      // Open WhatsApp in the same click so mobile browsers don't block the popup,
+      // then fire the soft-lock request right behind it.
+      window.open(buildWhatsAppLink(payload), '_blank');
+
+      try {
+        const res = await fetch(`${API_BASE}/api/lock/bank-transfer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          showStatus(data.error || 'Could not hold that slot.', true);
+          return;
+        }
+        showStatus('Slot held for 10 minutes — send your receipt on WhatsApp to confirm.');
+        resetAfterBooking(false);
+      } catch (err) {
+        showStatus('Network error — please try again.', true);
+      }
+    }
+
+    function resetAfterBooking(clearContactFields) {
+      selectedTime = null;
+      $('paymentSection').classList.add('hidden');
+      if (clearContactFields) {
+        $('custName').value = '';
+        $('custPhone').value = '';
+      }
+      fetchSlots();
+    }
+
+    // -------------------- Admin --------------------
+
+    function toggleStaffView() {
+      const wasInAdmin = !$('adminView').classList.contains('hidden');
+      $('bookingView').classList.toggle('hidden', !wasInAdmin);
+      $('adminView').classList.toggle('hidden', wasInAdmin);
+      if (!wasInAdmin && adminToken) loadAdminData();
+    }
+
+    async function adminLogin() {
+      const password = $('adminPassword').value;
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          $('adminLoginError').textContent = 'Incorrect password.';
+          return;
+        }
+        adminToken = data.token;
+        try { sessionStorage.setItem('gs_admin_token', adminToken); } catch {}
+        $('adminLoginPane').classList.add('hidden');
+        $('adminPanel').classList.remove('hidden');
+        loadAdminData();
+      } catch (err) {
+        $('adminLoginError').textContent = 'Network error — please try again.';
+      }
+    }
+
+    function adminLogout() {
+      adminToken = null;
+      try { sessionStorage.removeItem('gs_admin_token'); } catch {}
+      $('adminPanel').classList.add('hidden');
+      $('adminLoginPane').classList.remove('hidden');
+      $('adminPassword').value = '';
+    }
+
+    async function loadAdminData() {
+      await Promise.all([loadPending(), loadSchedule()]);
+    }
+
+    async function loadPending() {
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/pending`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        const data = await res.json();
+        if (data.ok) renderPending(data.pending);
+      } catch (err) { /* silent — next poll retries */ }
+    }
+
+    function renderPending(pending) {
+      const el = $('pendingList');
+      if (!pending.length) {
+        el.innerHTML = '<p class="text-white/40 text-sm">Nothing waiting on approval right now.</p>';
+        return;
+      }
+      el.innerHTML = pending.map((p) => `
+        <div class="border border-white/10 rounded-lg p-3">
+          <p class="text-sm text-gold">${p.name}</p>
+          <p class="text-xs text-white/50">${p.phone}</p>
+          <p class="text-xs text-white/50 mb-2">${p.service} on ${p.date} at ${formatTime12h(p.time)}</p>
+          <div class="flex gap-2">
+            <button class="approve-btn flex-1 py-1.5 rounded bg-gold text-black text-xs font-semibold" data-date="${p.date}" data-time="${p.time}">Approve</button>
+            <button class="reject-btn flex-1 py-1.5 rounded border border-red-400/50 text-red-300 text-xs font-semibold" data-date="${p.date}" data-time="${p.time}">Reject</button>
+          </div>
+        </div>
+      `).join('');
+
+      el.querySelectorAll('.approve-btn').forEach((btn) => {
+        btn.addEventListener('click', () => adminAction('approve', btn.dataset.date, btn.dataset.time));
+      });
+      el.querySelectorAll('.reject-btn').forEach((btn) => {
+        btn.addEventListener('click', () => adminAction('reject', btn.dataset.date, btn.dataset.time));
+      });
+    }
+
+    async function adminAction(action, date, time) {
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/${action}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+          body: JSON.stringify({ date, time }),
+        });
+        const data = await res.json();
+        if (!data.ok) { alert(data.error || 'That action failed.'); return; }
+        loadAdminData();
+      } catch (err) {
+        alert('Network error — please try again.');
+      }
+    }
+
+    async function loadSchedule() {
+      const date = $('scheduleDate').value || todayISO();
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/schedule?date=${date}`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        const data = await res.json();
+        if (data.ok) renderSchedule(data.schedule);
+      } catch (err) { /* silent */ }
+    }
+
+    function renderSchedule(schedule) {
+      const el = $('scheduleList');
+      if (!schedule.length) {
+        el.innerHTML = '<p class="text-white/40">No approved bookings yet.</p>';
+        return;
+      }
+      el.innerHTML = schedule.map((s) => `
+        <div class="flex justify-between border-b border-white/5 pb-1">
+          <span>${formatTime12h(s.time)}: ${s.service}</span>
+          <span class="text-white/50">${s.name}</span>
+        </div>
+      `).join('');
+    }
+
+    // -------------------- Wire up --------------------
+
+    $('serviceSelect').addEventListener('change', fetchSlots);
+    $('dateInput').addEventListener('change', fetchSlots);
+    $('tabCard').addEventListener('click', () => switchPaymentTab('card'));
+    $('tabBank').addEventListener('click', () => switchPaymentTab('bank'));
+    $('payCardBtn').addEventListener('click', payWithCard);
+    $('payBankBtn').addEventListener('click', payWithBankTransfer);
+    $('staffToggle').addEventListener('click', toggleStaffView);
+    $('adminLoginBtn').addEventListener('click', adminLogin);
+    $('adminLogoutBtn').addEventListener('click', adminLogout);
+    $('scheduleDate').addEventListener('change', loadSchedule);
+
+    $('dateInput').min = todayISO();
+    $('dateInput').value = todayISO();
+    $('scheduleDate').value = todayISO();
+
+    try {
+      const saved = sessionStorage.getItem('gs_admin_token');
+      if (saved) {
+        adminToken = saved;
+        $('adminLoginPane').classList.add('hidden');
+        $('adminPanel').classList.remove('hidden');
+      }
+    } catch {}
+
+    loadServices().then(fetchSlots);
+
+    setInterval(() => {
+      if (!$('bookingView').classList.contains('hidden')) {
+        fetchSlots();
+      } else if (!$('adminView').classList.contains('hidden') && adminToken) {
+        loadPending();
+      }
+    }, POLL_INTERVAL_MS);
+  </script>
+</body>
+</html>
